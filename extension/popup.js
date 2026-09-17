@@ -5,6 +5,7 @@ const activePanel = document.querySelector('#active');
 const copyButton = document.querySelector('#copy');
 const stopButton = document.querySelector('#stop');
 const leaveButton = document.querySelector('#leave');
+const stateLabel = document.querySelector('.state-label');
 const status = document.querySelector('#status');
 const JOIN_BASE_URL = 'https://reviewit-zoba.onrender.com/join?room=';
 
@@ -15,6 +16,8 @@ function render(config) {
   const isHost = role === 'HOST';
   const isFollower = role === 'FOLLOWER';
 
+  stateLabel.classList.toggle('synced', isFollower);
+  stateLabel.textContent = isHost ? 'Live' : isFollower ? 'Synced' : 'Ready';
   startButton.style.display = active ? 'none' : 'block';
   roomInput.style.display = active ? 'none' : 'block';
   joinButton.style.display = active ? 'none' : 'block';
@@ -23,9 +26,9 @@ function render(config) {
   stopButton.style.display = isHost ? 'block' : 'none';
   leaveButton.style.display = isFollower ? 'block' : 'none';
 
-  if (isHost && roomId) status.textContent = `Hosting room ${roomId}`;
+  if (isHost && roomId) status.textContent = `Room ${roomId}`;
   else if (isHost) status.textContent = 'Starting host room...';
-  else if (isFollower && roomId) status.textContent = `Joined room ${roomId}`;
+  else if (isFollower && roomId) status.textContent = `Room ${roomId}`;
   else status.textContent = 'Not in a review';
 }
 

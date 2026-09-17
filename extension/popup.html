@@ -4,25 +4,59 @@
     <meta charset="utf-8">
     <title>Box Review Sync</title>
     <style>
-      body { width: 240px; margin: 16px; font: 14px sans-serif; color: #202124; }
-      h1 { font-size: 16px; margin: 0 0 12px; }
-      button, input { box-sizing: border-box; width: 100%; padding: 8px; margin-top: 8px; }
+      :root {
+        color-scheme: dark;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #17191d;
+        color: #f1f3f5;
+      }
+      * { box-sizing: border-box; }
+      body { width: 286px; margin: 0; padding: 18px; background: #17191d; }
+      header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
+      .brand { margin: 0; color: #f5f6f7; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; }
+      .brand-accent { color: #6fca9b; }
+      .product { margin-top: 4px; color: #858b95; font-size: 12px; }
+      .version { color: #626873; font-size: 10px; letter-spacing: 0.08em; }
+      .state { padding: 14px; border: 1px solid #30343b; border-radius: 7px; background: #202329; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18); }
+      .state-label { display: flex; align-items: center; gap: 7px; color: #aeb5bf; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+      .state-label::before { width: 6px; height: 6px; border-radius: 50%; background: #858b95; box-shadow: 0 0 0 3px rgba(133, 139, 149, 0.12); content: ""; }
+      .state-label.synced::before { background: #6fca9b; box-shadow: 0 0 0 3px rgba(111, 202, 155, 0.12); }
+      #status { min-height: 22px; margin-top: 8px; color: #f1f3f5; font-size: 15px; font-weight: 600; }
+      .room-hint { margin-top: 24px; color: #858b95; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+      button, input { width: 100%; min-height: 36px; border-radius: 5px; font: inherit; }
+      button { margin-top: 10px; border: 1px solid #3d78b8; background: #2b6da8; color: #fff; cursor: pointer; font-size: 13px; font-weight: 600; transition: background 120ms ease, border-color 120ms ease; }
+      button:hover { border-color: #659bd0; background: #347fbd; }
+      button:focus-visible, input:focus-visible { outline: 2px solid #76aee0; outline-offset: 2px; }
+      input { margin-top: 8px; padding: 0 11px; border: 1px solid #3a3f47; background: #15171a; color: #f1f3f5; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+      input::placeholder { color: #737984; letter-spacing: 0; text-transform: none; }
       #active { display: none; }
       #copy, #stop, #leave { display: none; }
-      #status { min-height: 18px; margin-top: 10px; color: #555; }
+      #stop, #leave { border-color: #3a3f47; background: transparent; color: #b8bec7; }
+      #stop:hover, #leave:hover { border-color: #656d78; background: #292d33; color: #fff; }
     </style>
   </head>
   <body>
-    <h1>Box Review Sync</h1>
-    <button id="start">Start Review (Host)</button>
-    <input id="room" maxlength="4" placeholder="Room code">
-    <button id="join">Join Review</button>
-    <div id="active">
-      <button id="copy">Copy Review Link</button>
-      <button id="stop">Stop Review</button>
-      <button id="leave">Leave Review</button>
+    <header>
+      <div>
+        <div class="brand"><span>REVIEW</span><span class="brand-accent">IT</span></div>
+        <div class="product">Part of the StageView family</div>
+      </div>
+      <div class="version">0.1</div>
+    </header>
+    <section class="state">
+      <div class="state-label">Ready</div>
+      <div id="status">Not in a review</div>
+      <div class="room-hint">Room</div>
+      <input id="room" maxlength="4" placeholder="Enter room code" aria-label="Room code">
+      <button id="start">Start Review</button>
+      <button id="join">Join Review</button>
+      <div id="active">
+        <button id="copy">Copy Review Link</button>
+        <button id="stop">Stop Review</button>
+        <button id="leave">Leave Review</button>
+      </div>
     </div>
-    <div id="status"></div>
+    </section>
     <script src="popup.js"></script>
   </body>
 </html>

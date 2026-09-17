@@ -57,29 +57,55 @@
       'left: 50%',
       'top: 50%',
       'transform: translate(-50%, -50%)',
-      'padding: 20px',
-      'background: rgba(20, 24, 32, 0.96)',
-      'border: 1px solid rgba(255, 255, 255, 0.25)',
-      'border-radius: 8px',
-      'box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35)',
-      'color: white',
+      'min-width: 214px',
+      'padding: 16px',
+      'background: rgba(23, 25, 29, 0.96)',
+      'border: 1px solid rgba(255, 255, 255, 0.16)',
+      'border-radius: 7px',
+      'box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38)',
+      'backdrop-filter: blur(10px)',
+      'color: #f1f3f5',
       'font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      'text-align: center'
+      'text-align: left',
+      'animation: reviewit-join-in 160ms ease-out'
     ].join(';');
 
+    const style = document.createElement('style');
+    style.textContent = '@keyframes reviewit-join-in { from { opacity: 0; transform: translate(-50%, -47%); } to { opacity: 1; transform: translate(-50%, -50%); } }';
+    container.append(style);
+    const brand = document.createElement('div');
+    brand.style.cssText = 'color: #f5f6f7; font-size: 10px; font-weight: 700; letter-spacing: 0.14em;';
+    const review = document.createElement('span');
+    review.textContent = 'REVIEW';
+    const it = document.createElement('span');
+    it.textContent = 'IT';
+    it.style.color = '#6fca9b';
+    brand.append(review, it);
+    const syncState = document.createElement('div');
+    const syncDot = document.createElement('span');
+    syncDot.textContent = '●';
+    syncDot.style.color = '#6fca9b';
+    const syncText = document.createElement('span');
+    syncText.textContent = '  Synced to host';
+    syncState.append(syncDot, syncText);
+    syncState.style.cssText = 'margin-top: 9px; color: #aeb5bf; font-size: 12px;';
     const label = document.createElement('div');
     label.textContent = 'Click to join playback';
-    label.style.marginBottom = '12px';
+    label.style.cssText = 'margin-top: 14px; color: #858b95; font-size: 12px;';
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = 'Join playback';
+    button.textContent = 'Join Playback';
     button.style.cssText = [
-      'padding: 8px 16px',
-      'border: 0',
-      'border-radius: 4px',
-      'background: #2f80ed',
-      'color: white',
+      'width: 100%',
+      'margin-top: 13px',
+      'padding: 9px 13px',
+      'border: 1px solid #3d78b8',
+      'border-radius: 5px',
+      'background: #2b6da8',
+      'color: #fff',
       'font: inherit',
+      'font-size: 13px',
+      'font-weight: 600',
       'cursor: pointer'
     ].join(';');
     button.addEventListener('click', () => {
@@ -101,7 +127,7 @@
         log('follower video.play() rejected after ReviewIt button click', reason);
       });
     });
-    container.append(label, button);
+    container.append(brand, syncState, label, button);
     document.documentElement.append(container);
     playbackPrompt = container;
   }
