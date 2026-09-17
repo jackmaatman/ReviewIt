@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Box Review Sync",
+  "version": "0.1.0",
+  "description": "Small host-authoritative sync for internal Box video reviews.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["https://*.box.com/*", "https://box.com/*"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "Box Review Sync",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.box.com/*", "https://box.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

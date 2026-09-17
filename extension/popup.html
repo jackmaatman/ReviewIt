@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Box Review Sync</title>
+    <style>
+      body { width: 240px; margin: 16px; font: 14px sans-serif; color: #202124; }
+      h1 { font-size: 16px; margin: 0 0 12px; }
+      button, input { box-sizing: border-box; width: 100%; padding: 8px; margin-top: 8px; }
+      #active { display: none; }
+      #copy, #stop, #leave { display: none; }
+      #status { min-height: 18px; margin-top: 10px; color: #555; }
+    </style>
+  </head>
+  <body>
+    <h1>Box Review Sync</h1>
+    <button id="start">Start Review (Host)</button>
+    <input id="room" maxlength="4" placeholder="Room code">
+    <button id="join">Join Review</button>
+    <div id="active">
+      <button id="copy">Copy Room Code</button>
+      <button id="stop">Stop Review</button>
+      <button id="leave">Leave Review</button>
+    </div>
+    <div id="status"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>
