@@ -1,7 +1,19 @@
+import { createServer } from 'node:http';
 import { WebSocketServer } from 'ws';
 
 const port = Number(process.env.PORT || 8787);
 const rooms = new Map();
+const httpServer = createServer((request, response) => {
+  if (request.method === 'GET' && request.url?.startsWith('/join')) {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Join ReviewIt</title></head>
+<body><h1>Joining ReviewIt...</h1><p>ReviewIt is connecting you to the host.</p></body></html>`);
+    return;
+  }
+  response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+  response.end('Not found');
+});
 
 function makeRoomId() {
   let roomId;
@@ -21,7 +33,7 @@ function broadcast(room, message, except) {
   }
 }
 
-const wss = new WebSocketServer({ host: '0.0.0.0', port });
+const wss = new WebSocketServer({ server: httpServer });
 
 wss.on('connection', (socket) => {
   socket.on('message', (raw) => {
@@ -82,4 +94,6 @@ wss.on('connection', (socket) => {
   });
 });
 
-console.log(`[relay] listening on 0.0.0.0:${port}`);
+httpServer.listen(port, '0.0.0.0', () => {
+  console.log(`[relay] listening on 0.0.0.0:${port}`);
+});

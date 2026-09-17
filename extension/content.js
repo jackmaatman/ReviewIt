@@ -1,5 +1,5 @@
 (() => {
-  const RELAY_URL = 'ws://localhost:8787';
+  const RELAY_URL = 'wss://reviewit-zoba.onrender.com';
   const HEARTBEAT_MS = 1500;
   const DRIFT_TOLERANCE_SECONDS = 0.35;
   let config = null;

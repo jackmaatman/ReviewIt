@@ -6,6 +6,7 @@ const copyButton = document.querySelector('#copy');
 const stopButton = document.querySelector('#stop');
 const leaveButton = document.querySelector('#leave');
 const status = document.querySelector('#status');
+const JOIN_BASE_URL = 'https://reviewit-zoba.onrender.com/join?room=';
 
 function render(config) {
   const role = config?.role;
@@ -58,8 +59,9 @@ joinButton.addEventListener('click', () => {
 copyButton.addEventListener('click', () => {
   chrome.storage.local.get('boxReviewConfig', ({ boxReviewConfig }) => {
     if (!boxReviewConfig?.roomId) return;
-    navigator.clipboard.writeText(boxReviewConfig.roomId);
-    status.textContent = `Copied room ${boxReviewConfig.roomId}`;
+    const joinUrl = `${JOIN_BASE_URL}${encodeURIComponent(boxReviewConfig.roomId)}`;
+    navigator.clipboard.writeText(joinUrl);
+    status.textContent = 'Copied review link';
   });
 });
 

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Small host-authoritative sync for internal Box video reviews.",
   "permissions": ["storage", "tabs"],
-  "host_permissions": ["https://*.box.com/*", "https://box.com/*"],
+  "host_permissions": ["https://*.box.com/*", "https://box.com/*", "https://reviewit-zoba.onrender.com/*"],
   "background": { "service_worker": "background.js" },
   "action": {
     "default_title": "Box Review Sync",
@@ -14,6 +14,11 @@
     {
       "matches": ["https://*.box.com/*", "https://box.com/*"],
       "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://reviewit-zoba.onrender.com/join*"],
+      "js": ["join.js"],
       "run_at": "document_idle"
     }
   ]
