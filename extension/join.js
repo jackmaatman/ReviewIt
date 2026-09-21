@@ -18,7 +18,7 @@
     if (message.type === 'JOINED') {
       const state = message.state;
       if (!state?.url) {
-        status('The host has not opened a Box video yet.');
+        status('The host has not opened playable media yet.');
         return;
       }
       chrome.storage.local.set({

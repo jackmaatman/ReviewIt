@@ -27,3 +27,9 @@ The Render relay serves a minimal `/join?room=ABCD` page. The extension's join-p
 Use the page DevTools console for `[box-sync]` logs. The first Box run should confirm `detected player`; if it does not, the extension's player adapter needs to be adjusted to the account's Box rendering mode.
 
 The room configuration is stored locally in each profile so a follower remains in the same room when the content script reloads after a host navigation.
+
+## Provider support
+
+ReviewIt loads small provider adapters for Box and Google Drive. Both use the viewer's existing authenticated browser session and direct native video access; the relay receives synchronization messages only.
+
+Box remains the fully tested provider. Google Drive also injects a diagnostic/player script into matching child frames, including the observed `youtube.googleapis.com` viewer frame. That frame reports native video state to the top-level Drive adapter through a `postMessage` bridge, and the adapter delegates play, pause, and seek commands back to it. The extension logs frame URL, origin, top-level status, video count, current time, paused state, and command results. If a Drive account uses a provider frame outside the configured Google origins or exposes no native video, ReviewIt logs the inaccessible frame condition and leaves the provider unattached without bypassing permissions.

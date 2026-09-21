@@ -12,8 +12,10 @@
   let hostNavigationPending = false;
   let reconnectEnabled = true;
   let playbackPrompt = null;
+  let joinHint = null;
+  let provider = null;
 
-  const log = (...args) => console.log('[box-sync]', ...args);
+  const log = (...args) => console.log('[ReviewIt]', ...args);
   const message = (text) => ({ message: text });
 
   function saveConfig() {
@@ -23,9 +25,11 @@
   function currentEvent(type, extra = {}) {
     return {
       type,
-      url: location.href,
-      time: player?.currentTime || 0,
-      playing: Boolean(player && !player.paused),
+      provider: provider?.name || null,
+      url: provider?.getCurrentUrl() || location.href,
+      mediaId: provider?.getCurrentMediaId() || null,
+      time: provider?.getCurrentTime(player) || 0,
+      playing: provider?.isPlaying(player) || false,
       generatedAt: Date.now(),
       ...extra
     };
@@ -44,6 +48,54 @@
   function removePlaybackPrompt() {
     playbackPrompt?.remove();
     playbackPrompt = null;
+  }
+
+  function showJoinHint() {
+    if (joinHint) return;
+    joinHint = document.createElement('div');
+    joinHint.style.cssText = [
+      'position: fixed',
+      'z-index: 2147483647',
+      'top: 14px',
+      'left: 50%',
+      'transform: translateX(-50%)',
+      'min-width: 360px',
+      'padding: 15px 20px',
+      'border: 1px solid rgba(255, 255, 255, 0.18)',
+      'border-radius: 7px',
+      'background: rgba(23, 25, 29, 0.96)',
+      'box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38)',
+      'backdrop-filter: blur(10px)',
+      'color: #f1f3f5',
+      'font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      'pointer-events: none',
+      'text-align: left',
+      'animation: reviewit-join-in 160ms ease-out'
+    ].join(';');
+    const style = document.createElement('style');
+    style.textContent = '@keyframes reviewit-join-in { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, 0); } }';
+    const brand = document.createElement('div');
+    brand.style.cssText = 'color: #f5f6f7; font-size: 11px; font-weight: 700; letter-spacing: 0.14em;';
+    const review = document.createElement('span');
+    review.textContent = 'REVIEW';
+    const it = document.createElement('span');
+    it.textContent = 'IT';
+    it.style.color = '#6fca9b';
+    brand.append(review, it);
+    const message = document.createElement('div');
+    message.textContent = 'Click Play in the viewer to join playback';
+    message.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-top: 8px; color: #d9dde3; font-size: 15px; font-weight: 600;';
+    const dot = document.createElement('span');
+    dot.textContent = '●';
+    dot.style.cssText = 'color: #6fca9b; font-size: 10px;';
+    message.prepend(dot);
+    joinHint.append(style, brand, message);
+    (document.body || document.documentElement).append(joinHint);
+  }
+
+  function removeJoinHint() {
+    joinHint?.remove();
+    joinHint = null;
   }
 
   function showPlaybackPrompt(event) {
@@ -113,12 +165,14 @@
       if (!player || !latestEvent) return;
       const targetTime = expectedTime(latestEvent);
       suppressPlayerEvents = true;
-      player.currentTime = Math.max(0, targetTime);
-      const playPromise = player.play();
+      provider.seek(player, Math.max(0, targetTime));
+      const playPromise = provider.play(player);
       Promise.resolve(playPromise).then(() => {
         suppressPlayerEvents = false;
         config.playbackActivated = true;
         saveConfig();
+        provider.clearPlaybackPrompt?.();
+        removeJoinHint();
         pendingFollowerEvent = null;
         removePlaybackPrompt();
         log('follower playback joined', { targetTime });
@@ -145,28 +199,36 @@
     }
 
     const targetTime = expectedTime(event);
-    const drift = targetTime - player.currentTime;
+    const drift = targetTime - provider.getCurrentTime(player);
     if (event.type === 'SEEK' || Math.abs(drift) > DRIFT_TOLERANCE_SECONDS) {
       log('follower drift correction', { drift, targetTime });
       suppressPlayerEvents = true;
-      player.currentTime = Math.max(0, targetTime);
+      provider.seek(player, Math.max(0, targetTime));
       suppressPlayerEvents = false;
     }
     suppressPlayerEvents = true;
     if (event.playing) {
-      player.play().then(() => {
+      if (provider.isPlaying(player)) {
+        suppressPlayerEvents = false;
+        return;
+      }
+      provider.play(player).then(() => {
         suppressPlayerEvents = false;
         config.playbackActivated = true;
         saveConfig();
+        provider.clearPlaybackPrompt?.();
         removePlaybackPrompt();
       }).catch((reason) => {
         suppressPlayerEvents = false;
         log('follower video.play() rejected', reason);
-        showPlaybackPrompt(event);
+        if (provider.name === 'google-drive') showJoinHint();
+        if (provider.showPlaybackPrompt) provider.showPlaybackPrompt(event);
+        else showPlaybackPrompt(event);
       });
       return;
     }
-    player.pause();
+    provider.pause(player);
+    provider.clearPlaybackPrompt?.();
     suppressPlayerEvents = false;
     pendingFollowerEvent = null;
     removePlaybackPrompt();
@@ -177,26 +239,47 @@
   }
 
   function attachPlayer() {
-    const nextPlayer = [...document.querySelectorAll('video')]
-      .find((candidate) => candidate.offsetWidth > 0 && candidate.offsetHeight > 0) || document.querySelector('video');
+    provider = provider || window.ReviewItProviders?.detect();
+    if (!provider) return;
+    const nextPlayer = provider.getVideoElement();
+    if (!nextPlayer) {
+      log('provider detected:', provider.name, 'but no accessible native video element found', {
+        iframes: document.querySelectorAll('iframe').length
+      });
+      return;
+    }
     if (!nextPlayer || nextPlayer === player) return;
     player = nextPlayer;
-    log('detected player', player);
-    player.addEventListener('play', () => {
+    log('player attached', provider.name, provider.getCurrentMediaId());
+    provider.observePlaybackEvents(player, {
+      play: () => {
+      if (config?.role === 'FOLLOWER') {
+        provider.clearPlaybackPrompt?.();
+        removeJoinHint();
+      }
       if (config?.role === 'FOLLOWER' && !suppressPlayerEvents) {
         config.playbackActivated = true;
         saveConfig();
       }
       if (!suppressPlayerEvents) { log('PLAY'); sendHostEvent(currentEvent('PLAY')); }
-    });
-    player.addEventListener('pause', () => {
+      },
+      pause: () => {
       if (!suppressPlayerEvents) { log('PAUSE'); sendHostEvent(currentEvent('PAUSE')); }
+      },
+      seeking: () => {
+        seeking = true;
+        if (!suppressPlayerEvents) { log('SEEK', provider.getCurrentTime(player)); sendHostEvent(currentEvent('SEEK')); }
+      },
+      seeked: () => { seeking = false; },
+      playbackActivated: () => {
+        suppressPlayerEvents = false;
+        config.playbackActivated = true;
+        saveConfig();
+        pendingFollowerEvent = null;
+        removePlaybackPrompt();
+        log('follower playback joined in provider frame');
+      }
     });
-    player.addEventListener('seeking', () => {
-      seeking = true;
-      if (!suppressPlayerEvents) { log('SEEK', player.currentTime); sendHostEvent(currentEvent('SEEK')); }
-    });
-    player.addEventListener('seeked', () => { seeking = false; });
     if (hostNavigationPending) {
       sendHostEvent(currentEvent('NAVIGATE'));
       hostNavigationPending = false;
@@ -213,7 +296,7 @@
     if (location.href === lastUrl) return;
     const oldUrl = lastUrl;
     lastUrl = location.href;
-    log('detected Box file', location.href);
+    log('media changed:', provider?.name, provider?.getCurrentMediaId() || location.href);
     if (config?.role === 'HOST') {
       sendHostEvent(currentEvent('NAVIGATE', { from: oldUrl }));
       config.lastUrl = location.href;
@@ -299,6 +382,8 @@
 
   chrome.storage.local.get('boxReviewConfig', (result) => {
     config = result.boxReviewConfig || null;
+    provider = window.ReviewItProviders?.detect() || null;
+    if (provider) log('provider detected:', provider.name, provider.getCurrentMediaId());
     hostNavigationPending = config?.role === 'HOST' && config.lastUrl && config.lastUrl !== location.href;
     connect();
   });
@@ -310,5 +395,5 @@
     detectNavigation();
     if (config?.role === 'HOST' && player && !seeking) sendHostEvent(currentEvent('STATE'));
   }, HEARTBEAT_MS);
-  log('Box content script ready', location.href);
+  log('content script ready', location.href);
 })();
